@@ -1,4 +1,4 @@
-package com.example.pocketpos_lite
+package com.example.pocketpos_lite.domain.model
 
 import kotlinx.serialization.Serializable
 

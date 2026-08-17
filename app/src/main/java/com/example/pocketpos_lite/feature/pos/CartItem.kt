@@ -7,4 +7,6 @@ data class CartItem(
     val quantity: Double
 ) {
     val subtotal: Double get() = product.price * quantity
+    val availableStock: Double get() = product.stock_quantity
+    val hasStockAvailable: Boolean get() = quantity < availableStock
 }

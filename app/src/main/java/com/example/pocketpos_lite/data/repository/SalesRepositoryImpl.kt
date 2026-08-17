@@ -28,18 +28,40 @@ class SalesRepositoryImpl @Inject constructor(
         return membership?.get("business_id")
     }
 
-    override suspend fun searchProducts(query: String): Resource<List<Product>> {
+    override suspend fun getProducts(): Resource<List<Product>> {
         return try {
             val businessId = getMyBusinessId() ?: return Resource.Error("Business not found")
             val products = postgrest.from("products").select {
                 filter {
                     eq("business_id", businessId)
+                    eq("is_active", true)
+                }
+                order("name", order = Order.ASCENDING)
+            }.decodeList<Product>()
+            Resource.Success(products)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to load products")
+        }
+    }
+
+    override suspend fun searchProducts(query: String): Resource<List<Product>> {
+        return try {
+            val businessId = getMyBusinessId() ?: return Resource.Error("Business not found")
+            val cleanQuery = query.trim()
+            if (cleanQuery.isBlank()) {
+                return getProducts()
+            }
+            val products = postgrest.from("products").select {
+                filter {
+                    eq("business_id", businessId)
+                    eq("is_active", true)
                     or {
-                        ilike("name", "%$query%")
-                        ilike("sku", "%$query%")
-                        ilike("barcode", "%$query%")
+                        ilike("name", "%$cleanQuery%")
+                        ilike("sku", "%$cleanQuery%")
+                        ilike("barcode", "%$cleanQuery%")
                     }
                 }
+                order("name", order = Order.ASCENDING)
             }.decodeList<Product>()
             Resource.Success(products)
         } catch (e: Exception) {
@@ -52,6 +74,7 @@ class SalesRepositoryImpl @Inject constructor(
             val businessId = getMyBusinessId() ?: return Resource.Error("Business not found")
             val customers = postgrest.from("customers").select {
                 filter { eq("business_id", businessId) }
+                order("name", order = Order.ASCENDING)
             }.decodeList<Customer>()
             Resource.Success(customers)
         } catch (e: Exception) {
@@ -91,7 +114,7 @@ class SalesRepositoryImpl @Inject constructor(
                     put("p_discount_amount", discountAmount)
                     put("p_tax_amount", taxAmount)
                     put("p_net_amount", netAmount)
-                    put("p_payment_method", paymentMethod)
+                    put("p_payment_method", paymentMethod.lowercase())
                     put("p_items", itemsJson)
                 }
             ).data.replace("\"", "")

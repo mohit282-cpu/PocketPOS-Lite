@@ -1,7 +1,6 @@
 package com.example.pocketpos_lite.data.repository
 
 import com.example.pocketpos_lite.core.common.Resource
-import com.example.pocketpos_lite.domain.model.Business
 import com.example.pocketpos_lite.domain.model.Profile
 import com.example.pocketpos_lite.domain.repository.AuthRepository
 import io.github.jan.supabase.auth.Auth
@@ -10,7 +9,10 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
 import io.github.jan.supabase.postgrest.Postgrest
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
@@ -33,33 +35,29 @@ class AuthRepositoryImpl @Inject constructor(
         phone: String
     ): Resource<Unit> {
         return try {
-            auth.signUpWith(Email) {
+            val signUpResult = auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
+                // Pass metadata so the database trigger can create the business
+                data = buildJsonObject {
+                    put("full_name", fullName)
+                    put("business_name", businessName)
+                    put("phone", phone)
+                }
             }
-            val user = auth.currentUserOrNull() ?: return Resource.Error("User creation failed")
+            
+            if (signUpResult == null && auth.currentUserOrNull() == null) {
+                return Resource.Error("User creation failed")
+            }
 
-            // Create profile
-            val profile = Profile(id = user.id, full_name = fullName)
-            postgrest.from("profiles").insert(profile)
-
-            // Create business
-            val business = Business(name = businessName, owner_id = user.id, phone = phone)
-            val insertedBusiness = postgrest.from("businesses").insert(business) {
-                select()
-            }.decodeSingle<Business>()
-
-            // Create business user membership
-            val businessUser = mapOf(
-                "business_id" to insertedBusiness.id,
-                "user_id" to user.id,
-                "role" to "owner"
-            )
-            postgrest.from("business_users").insert(businessUser)
+            // The profile, business, and business_users records are now handled 
+            // automatically by the database trigger 'on_auth_user_created'.
+            // This is more secure and works even if email confirmation is required.
 
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Unknown error occurred")
+            val cleanError = e.message?.substringBefore("\n") ?: "Unknown error occurred"
+            Resource.Error(cleanError)
         }
     }
 
@@ -71,7 +69,8 @@ class AuthRepositoryImpl @Inject constructor(
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Login failed")
+            val cleanError = e.message?.substringBefore("\n") ?: "Login failed"
+            Resource.Error(cleanError)
         }
     }
 
@@ -85,6 +84,8 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getCurrentSession(): UserInfo? {
+        // Wait for session to initialize if it's currently initializing
+        auth.sessionStatus.first { it !is SessionStatus.Initializing }
         return auth.currentUserOrNull()
     }
 

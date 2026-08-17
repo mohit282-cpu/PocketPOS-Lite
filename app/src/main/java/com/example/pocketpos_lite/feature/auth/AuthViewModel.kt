@@ -23,23 +23,29 @@ class AuthViewModel @Inject constructor(
     private val _event = MutableSharedFlow<AuthEvent>()
     val event = _event.asSharedFlow()
 
-    fun login(email: String, password: String) {
-        viewModelScope.launch {
-            updateState { it.copy(isLoading = true, error = null) }
-            when (val result = authRepository.login(email, password)) {
-                is Resource.Success -> _event.emit(AuthEvent.Success)
-                is Resource.Error -> updateState { it.copy(isLoading = false, error = result.message) }
-                else -> Unit
-            }
-        }
-    }
-
     fun signUp(email: String, password: String, fullName: String, businessName: String, phone: String) {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true, error = null) }
             when (val result = authRepository.signUp(email, password, fullName, businessName, phone)) {
                 is Resource.Success -> _event.emit(AuthEvent.Success)
-                is Resource.Error -> updateState { it.copy(isLoading = false, error = result.message) }
+                is Resource.Error -> {
+                    val cleanError = result.message?.substringBefore("\n") ?: "Registration failed"
+                    updateState { it.copy(isLoading = false, error = cleanError) }
+                }
+                else -> Unit
+            }
+        }
+    }
+
+    fun login(email: String, password: String) {
+        viewModelScope.launch {
+            updateState { it.copy(isLoading = true, error = null) }
+            when (val result = authRepository.login(email, password)) {
+                is Resource.Success -> _event.emit(AuthEvent.Success)
+                is Resource.Error -> {
+                    val cleanError = result.message?.substringBefore("\n") ?: "Login failed"
+                    updateState { it.copy(isLoading = false, error = cleanError) }
+                }
                 else -> Unit
             }
         }

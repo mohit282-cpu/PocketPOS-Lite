@@ -116,7 +116,12 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (uiState.error != null) {
-            Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error)
+            Text(
+                text = uiState.error!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
