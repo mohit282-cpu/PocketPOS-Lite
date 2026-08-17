@@ -1,5 +1,8 @@
 package com.example.pocketpos_lite.feature.business
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,8 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.pocketpos_lite.domain.model.Business
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,6 +28,7 @@ fun BusinessProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -29,6 +36,18 @@ fun BusinessProfileScreen(
     var email by remember { mutableStateOf("") }
     var currency by remember { mutableStateOf("") }
     var invoicePrefix by remember { mutableStateOf("") }
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            val inputStream = context.contentResolver.openInputStream(it)
+            val bytes = inputStream?.readBytes()
+            if (bytes != null) {
+                viewModel.uploadLogo("${System.currentTimeMillis()}.jpg", bytes)
+            }
+        }
+    }
 
     LaunchedEffect(uiState.business) {
         uiState.business?.let {
@@ -81,16 +100,23 @@ fun BusinessProfileScreen(
                     .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Logo placeholder
                 Card(
                     modifier = Modifier
-                        .size(100.dp)
+                        .size(120.dp)
                         .align(Alignment.CenterHorizontally),
-                    onClick = { /* Logo picking logic */ }
+                    onClick = { launcher.launch("image/*") }
                 ) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(48.dp))
-                        // In a real app, I'd use Coil to load the logo_url
+                        if (uiState.business?.logo_url != null) {
+                            AsyncImage(
+                                model = uiState.business!!.logo_url,
+                                contentDescription = "Business Logo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(48.dp))
+                        }
                     }
                 }
                 Text(text = "Tap to change logo", style = MaterialTheme.typography.labelSmall, modifier = Modifier.align(Alignment.CenterHorizontally))

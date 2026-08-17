@@ -58,7 +58,9 @@ class BusinessRepositoryImpl @Inject constructor(
         return try {
             val bucket = storage.from("logos")
             val path = "${auth.currentUserOrNull()?.id}/$fileName"
-            bucket.upload(path, byteArray, upsert = true)
+            bucket.upload(path, byteArray) {
+                upsert = true
+            }
             val url = bucket.publicUrl(path)
             Resource.Success(url)
         } catch (e: Exception) {

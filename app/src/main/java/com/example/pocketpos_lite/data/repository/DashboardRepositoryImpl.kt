@@ -2,10 +2,12 @@ package com.example.pocketpos_lite.data.repository
 
 import com.example.pocketpos_lite.core.common.Resource
 import com.example.pocketpos_lite.domain.model.DashboardStats
+import com.example.pocketpos_lite.domain.model.Sale
 import com.example.pocketpos_lite.domain.repository.DashboardRepository
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Count
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -69,6 +71,20 @@ class DashboardRepositoryImpl @Inject constructor(
             ))
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Failed to load dashboard stats")
+        }
+    }
+
+    override suspend fun getRecentSales(limit: Int): Resource<List<Sale>> {
+        return try {
+            val businessId = getMyBusinessId() ?: return Resource.Error("Business not found")
+            val sales = postgrest.from("sales").select {
+                filter { eq("business_id", businessId) }
+                order("created_at", Order.DESCENDING)
+                limit(limit.toLong())
+            }.decodeList<Sale>()
+            Resource.Success(sales)
+        } catch (e: Exception) {
+            Resource.Error(e.message ?: "Failed to load recent sales")
         }
     }
 }

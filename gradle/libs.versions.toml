@@ -14,6 +14,8 @@ room = "2.6.1"
 supabase = "3.1.1"
 navigationCompose = "2.8.3"
 kotlinxSerialization = "1.7.3"
+kotlinxDatetime = "0.6.1"
+coil = "2.7.0"
 ktor = "3.0.1"
 ksp = "2.0.21-1.0.28"
 
@@ -45,6 +47,7 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 
 # Supabase
+supabase-kt = { group = "io.github.jan-tennert.supabase", name = "supabase-kt", version.ref = "supabase" }
 supabase-postgrest = { group = "io.github.jan-tennert.supabase", name = "postgrest-kt", version.ref = "supabase" }
 supabase-auth = { group = "io.github.jan-tennert.supabase", name = "auth-kt", version.ref = "supabase" }
 supabase-storage = { group = "io.github.jan-tennert.supabase", name = "storage-kt", version.ref = "supabase" }
@@ -58,6 +61,10 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 
 # Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+
+# Image Loading
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
