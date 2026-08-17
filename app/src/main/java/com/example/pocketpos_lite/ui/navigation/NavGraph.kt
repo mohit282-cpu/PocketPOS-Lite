@@ -16,6 +16,8 @@ import com.example.pocketpos_lite.feature.startup.SplashScreen
 import com.example.pocketpos_lite.ui.components.MainScaffold
 import com.example.pocketpos_lite.feature.business.BusinessProfileScreen
 import com.example.pocketpos_lite.feature.business.SettingsScreen
+import com.example.pocketpos_lite.feature.pos.POSScreen
+import com.example.pocketpos_lite.feature.products.ProductScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -97,8 +99,16 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        composable(Screen.Products.route) { MainScaffold(navController) { PlaceholderScreen("Products", it) } }
-        composable(Screen.POS.route) { MainScaffold(navController) { PlaceholderScreen("POS", it) } }
+        composable(Screen.Products.route) {
+            MainScaffold(navController) { modifier ->
+                ProductScreen(modifier = modifier)
+            }
+        }
+        composable(Screen.POS.route) {
+            MainScaffold(navController) { modifier ->
+                POSScreen(modifier = modifier)
+            }
+        }
         composable(Screen.Customers.route) { MainScaffold(navController) { PlaceholderScreen("Customers", it) } }
         composable(Screen.Reports.route) { MainScaffold(navController) { PlaceholderScreen("Reports", it) } }
     }

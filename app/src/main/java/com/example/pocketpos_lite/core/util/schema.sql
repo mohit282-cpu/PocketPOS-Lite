@@ -222,3 +222,52 @@ CREATE INDEX idx_sales_business_id ON public.sales(business_id);
 CREATE INDEX idx_inventory_movements_product_id ON public.inventory_movements(product_id);
 CREATE INDEX idx_sale_items_sale_id ON public.sale_items(sale_id);
 CREATE INDEX idx_business_users_user_id ON public.business_users(user_id);
+
+-- 13. Atomic Sale Creation Function
+CREATE OR REPLACE FUNCTION public.create_sale(
+    p_business_id UUID,
+    p_customer_id UUID,
+    p_total_amount DECIMAL,
+    p_discount_amount DECIMAL,
+    p_tax_amount DECIMAL,
+    p_net_amount DECIMAL,
+    p_payment_method TEXT,
+    p_items JSONB -- Array of {product_id, quantity, unit_price, subtotal}
+) RETURNS UUID AS $$
+DECLARE
+    v_sale_id UUID;
+    v_item JSONB;
+BEGIN
+    -- 1. Create Sale
+    INSERT INTO public.sales (business_id, customer_id, total_amount, discount_amount, tax_amount, net_amount, status)
+    VALUES (p_business_id, p_customer_id, p_total_amount, p_discount_amount, p_tax_amount, p_net_amount, 'completed')
+    RETURNING id INTO v_sale_id;
+
+    -- 2. Process Items
+    FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+    LOOP
+        -- Insert Sale Item
+        INSERT INTO public.sale_items (sale_id, product_id, quantity, unit_price, subtotal)
+        VALUES (v_sale_id, (v_item->>'product_id')::UUID, (v_item->>'quantity')::DECIMAL, (v_item->>'unit_price')::DECIMAL, (v_item->>'subtotal')::DECIMAL);
+
+        -- Update Stock with negative check
+        UPDATE public.products
+        SET stock_quantity = stock_quantity - (v_item->>'quantity')::DECIMAL
+        WHERE id = (v_item->>'product_id')::UUID AND stock_quantity >= (v_item->>'quantity')::DECIMAL;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Insufficient stock for product %', (v_item->>'product_id');
+        END IF;
+
+        -- Record Inventory Movement
+        INSERT INTO public.inventory_movements (product_id, business_id, quantity_change, movement_type, notes)
+        VALUES ((v_item->>'product_id')::UUID, p_business_id, -(v_item->>'quantity')::DECIMAL, 'sale', 'Sale #' || v_sale_id);
+    END LOOP;
+
+    -- 3. Create Payment
+    INSERT INTO public.payments (sale_id, business_id, amount, payment_method, status)
+    VALUES (v_sale_id, p_business_id, p_net_amount, p_payment_method, 'success');
+
+    RETURN v_sale_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

@@ -10,9 +10,9 @@ sealed class BottomNavItem(
     val icon: ImageVector
 ) {
     object Dashboard : BottomNavItem("Dashboard", Screen.Dashboard.route, Icons.Default.Dashboard)
-    object Products : BottomNavItem("Products", "products", Icons.Default.Inventory)
-    object POS : BottomNavItem("POS", "pos", Icons.Default.PointOfSale)
-    object Customers : BottomNavItem("Customers", "customers", Icons.Default.People)
-    object Reports : BottomNavItem("Reports", "reports", Icons.Default.BarChart)
-    object Settings : BottomNavItem("Settings", "settings", Icons.Default.Settings)
+    object Products : BottomNavItem("Products", Screen.Products.route, Icons.Default.Inventory)
+    object POS : BottomNavItem("POS", Screen.POS.route, Icons.Default.PointOfSale)
+    object Customers : BottomNavItem("Customers", Screen.Customers.route, Icons.Default.People)
+    object Reports : BottomNavItem("Reports", Screen.Reports.route, Icons.Default.BarChart)
+    object Settings : BottomNavItem("Settings", Screen.Settings.route, Icons.Default.Settings)
 }
