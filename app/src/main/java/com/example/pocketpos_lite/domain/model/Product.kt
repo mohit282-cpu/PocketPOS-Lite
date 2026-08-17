@@ -14,6 +14,7 @@ data class Product(
     val price: Double,
     val cost_price: Double = 0.0,
     val stock_quantity: Double = 0.0,
+    val min_stock: Double = 0.0,
     val unit: String = "pcs",
     val image_url: String? = null,
     val is_active: Boolean = true,

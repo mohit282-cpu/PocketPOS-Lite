@@ -10,6 +10,7 @@ interface SalesRepository {
     suspend fun searchProducts(query: String): Resource<List<Product>>
     suspend fun getCustomers(): Resource<List<Customer>>
     suspend fun createSale(
+        cashierId: String,
         customerId: String?,
         totalAmount: Double,
         discountAmount: Double,

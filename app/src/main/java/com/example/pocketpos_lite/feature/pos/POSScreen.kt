@@ -9,6 +9,9 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -111,7 +114,7 @@ fun POSScreen(
                                         showCustomerMenu = false
                                     }
                                 )
-                                Divider()
+                                HorizontalDivider()
                                 uiState.customers.forEach { customer ->
                                     DropdownMenuItem(
                                         text = { Text(customer.name) },
@@ -217,7 +220,7 @@ fun POSScreen(
                     }
                 }
 
-                Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
+                VerticalDivider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
                 // Right Column: Cart Panel & Summary
                 Column(
@@ -287,7 +290,7 @@ fun POSScreen(
                         }
                     }
 
-                    Divider(modifier = Modifier.padding(vertical = 12.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                     // Summary & Checkout CTA
                     SummarySection(
@@ -431,7 +434,7 @@ fun CartItemRow(
     onQuantityChange: (Double) -> Unit,
     onRemove: () -> Unit
 ) {
-    val isMaxStock = item.quantity >= item.availableStock
+    val isMaxStock = item.quantity >= item.product.stock_quantity
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -672,7 +675,7 @@ fun CheckoutDialog(
                     )
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 Text("Select Payment Method", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 

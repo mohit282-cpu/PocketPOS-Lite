@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import io.github.jan.supabase.auth.Auth
 import javax.inject.Inject
 
 data class POSUiState(
@@ -35,7 +36,8 @@ data class POSUiState(
 
 @HiltViewModel
 class POSViewModel @Inject constructor(
-    private val repository: SalesRepository
+    private val repository: SalesRepository,
+    private val auth: Auth
 ) : BaseViewModel<POSUiState>(POSUiState()) {
 
     private val _event = MutableSharedFlow<POSEvent>()
@@ -205,6 +207,11 @@ class POSViewModel @Inject constructor(
         viewModelScope.launch {
             updateState { it.copy(isProcessing = true, error = null) }
 
+            val cashierId = auth.currentUserOrNull()?.id ?: run {
+                updateState { it.copy(isProcessing = false, error = "Cashier session expired") }
+                return@launch
+            }
+
             val saleItems = state.cartItems.map {
                 SaleItem(
                     product_id = it.product.id!!,
@@ -215,6 +222,7 @@ class POSViewModel @Inject constructor(
             }
 
             val result = repository.createSale(
+                cashierId = cashierId,
                 customerId = state.selectedCustomer?.id,
                 totalAmount = state.subtotal,
                 discountAmount = state.discountAmount,

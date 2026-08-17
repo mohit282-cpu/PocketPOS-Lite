@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.pocketpos_lite.feature.auth.LoginScreen
 import com.example.pocketpos_lite.feature.auth.RegisterScreen
 import com.example.pocketpos_lite.feature.dashboard.DashboardScreen
@@ -18,6 +20,8 @@ import com.example.pocketpos_lite.feature.business.BusinessProfileScreen
 import com.example.pocketpos_lite.feature.business.SettingsScreen
 import com.example.pocketpos_lite.feature.pos.POSScreen
 import com.example.pocketpos_lite.feature.products.ProductScreen
+import com.example.pocketpos_lite.feature.products.AddEditProductScreen
+import com.example.pocketpos_lite.feature.products.CategoryScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -101,9 +105,44 @@ fun NavGraph(navController: NavHostController) {
 
         composable(Screen.Products.route) {
             MainScaffold(navController) { modifier ->
-                ProductScreen(modifier = modifier)
+                ProductScreen(
+                    modifier = modifier,
+                    onNavigateToAddProduct = {
+                        navController.navigate(Screen.AddProduct.route)
+                    },
+                    onNavigateToEditProduct = { productId ->
+                        navController.navigate(Screen.EditProduct.createRoute(productId))
+                    },
+                    onNavigateToCategories = {
+                        navController.navigate(Screen.Categories.route)
+                    }
+                )
             }
         }
+
+        composable(Screen.AddProduct.route) {
+            AddEditProductScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.EditProduct.route,
+            arguments = listOf(navArgument("productId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId")
+            AddEditProductScreen(
+                productId = productId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Categories.route) {
+            CategoryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.POS.route) {
             MainScaffold(navController) { modifier ->
                 POSScreen(modifier = modifier)

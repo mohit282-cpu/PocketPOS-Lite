@@ -97,10 +97,16 @@ CREATE TABLE IF NOT EXISTS public.business_users (
 
 ALTER TABLE public.business_users ENABLE ROW LEVEL SECURITY;
 
--- Security Helper Function
+-- Security Helper Functions
 CREATE OR REPLACE FUNCTION public.get_my_business_ids()
 RETURNS SETOF UUID AS $$
     SELECT business_id FROM public.business_users WHERE user_id = auth.uid();
+$$ LANGUAGE sql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.get_my_admin_business_ids()
+RETURNS SETOF UUID AS $$
+    SELECT business_id FROM public.business_users
+    WHERE user_id = auth.uid() AND role IN ('owner', 'admin');
 $$ LANGUAGE sql SECURITY DEFINER;
 
 -- Policies for Businesses and Business Users
@@ -116,7 +122,7 @@ BEGIN
         CREATE POLICY "Users can view members of their business" ON public.business_users FOR SELECT USING (business_id IN (SELECT public.get_my_business_ids()));
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Admins/Owners can manage members') THEN
-        CREATE POLICY "Admins/Owners can manage members" ON public.business_users FOR ALL USING (business_id IN (SELECT business_id FROM public.business_users WHERE user_id = auth.uid() AND role IN ('owner', 'admin')));
+        CREATE POLICY "Admins/Owners can manage members" ON public.business_users FOR ALL USING (business_id IN (SELECT public.get_my_admin_business_ids()));
     END IF;
 END $$;
 
@@ -150,6 +156,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     price DECIMAL(12,2) NOT NULL DEFAULT 0,
     cost_price DECIMAL(12,2) DEFAULT 0,
     stock_quantity DECIMAL(12,2) DEFAULT 0,
+    min_stock DECIMAL(12,2) DEFAULT 0,
     unit TEXT DEFAULT 'pcs',
     image_url TEXT,
     is_active BOOLEAN DEFAULT true,
@@ -188,6 +195,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.sales (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     business_id UUID REFERENCES public.businesses(id) ON DELETE CASCADE NOT NULL,
+    cashier_id UUID REFERENCES public.profiles(id) NOT NULL,
     customer_id UUID REFERENCES public.customers(id) ON DELETE SET NULL,
     total_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
     discount_amount DECIMAL(12,2) DEFAULT 0,
@@ -284,6 +292,7 @@ END $$;
 -- 13. Atomic Sale Creation Function
 CREATE OR REPLACE FUNCTION public.create_sale(
     p_business_id UUID,
+    p_cashier_id UUID,
     p_customer_id UUID,
     p_total_amount DECIMAL,
     p_discount_amount DECIMAL,
@@ -296,8 +305,8 @@ DECLARE
     v_sale_id UUID;
     v_item JSONB;
 BEGIN
-    INSERT INTO public.sales (business_id, customer_id, total_amount, discount_amount, tax_amount, net_amount, status)
-    VALUES (p_business_id, p_customer_id, p_total_amount, p_discount_amount, p_tax_amount, p_net_amount, 'completed')
+    INSERT INTO public.sales (business_id, cashier_id, customer_id, total_amount, discount_amount, tax_amount, net_amount, status)
+    VALUES (p_business_id, p_cashier_id, p_customer_id, p_total_amount, p_discount_amount, p_tax_amount, p_net_amount, 'completed')
     RETURNING id INTO v_sale_id;
 
     FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)

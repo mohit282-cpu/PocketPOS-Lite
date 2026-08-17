@@ -83,6 +83,7 @@ class SalesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun createSale(
+        cashierId: String,
         customerId: String?,
         totalAmount: Double,
         discountAmount: Double,
@@ -109,6 +110,7 @@ class SalesRepositoryImpl @Inject constructor(
                 "create_sale",
                 buildJsonObject {
                     put("p_business_id", businessId)
+                    put("p_cashier_id", cashierId)
                     put("p_customer_id", customerId)
                     put("p_total_amount", totalAmount)
                     put("p_discount_amount", discountAmount)

@@ -23,13 +23,34 @@ class AuthViewModel @Inject constructor(
     private val _event = MutableSharedFlow<AuthEvent>()
     val event = _event.asSharedFlow()
 
+    fun clearError() {
+        updateState { it.copy(error = null) }
+    }
+
+    private fun formatAuthError(rawMessage: String?, defaultMsg: String): String {
+        val msg = rawMessage?.lowercase() ?: return defaultMsg
+        return when {
+            msg.contains("over_email_send_rate_limit") || msg.contains("rate limit") ->
+                "Too many registration requests. Please wait a few minutes before trying again."
+            msg.contains("user_already_exists") || msg.contains("already registered") || msg.contains("already in use") ->
+                "An account with this email address already exists. Try logging in."
+            msg.contains("invalid_credentials") || msg.contains("invalid login") ->
+                "Invalid email or password. Please double-check your details."
+            msg.contains("weak_password") || msg.contains("at least 6 characters") ->
+                "Password is too weak. Please use at least 6 characters."
+            msg.contains("unable to resolve host") || msg.contains("failed to connect") || msg.contains("network") ->
+                "Network connection issue. Please check your internet connection."
+            else -> rawMessage?.substringBefore("\n")?.takeIf { it.isNotBlank() } ?: defaultMsg
+        }
+    }
+
     fun signUp(email: String, password: String, fullName: String, businessName: String, phone: String) {
         viewModelScope.launch {
             updateState { it.copy(isLoading = true, error = null) }
             when (val result = authRepository.signUp(email, password, fullName, businessName, phone)) {
                 is Resource.Success -> _event.emit(AuthEvent.Success)
                 is Resource.Error -> {
-                    val cleanError = result.message?.substringBefore("\n") ?: "Registration failed"
+                    val cleanError = formatAuthError(result.message, "Registration failed. Please try again.")
                     updateState { it.copy(isLoading = false, error = cleanError) }
                 }
                 else -> Unit
@@ -43,7 +64,7 @@ class AuthViewModel @Inject constructor(
             when (val result = authRepository.login(email, password)) {
                 is Resource.Success -> _event.emit(AuthEvent.Success)
                 is Resource.Error -> {
-                    val cleanError = result.message?.substringBefore("\n") ?: "Login failed"
+                    val cleanError = formatAuthError(result.message, "Login failed. Please check your credentials.")
                     updateState { it.copy(isLoading = false, error = cleanError) }
                 }
                 else -> Unit
@@ -56,9 +77,12 @@ class AuthViewModel @Inject constructor(
             updateState { it.copy(isLoading = true, error = null) }
             when (val result = authRepository.resetPassword(email)) {
                 is Resource.Success -> {
-                    updateState { it.copy(isLoading = false, error = "Reset link sent to your email") }
+                    updateState { it.copy(isLoading = false, error = "Reset link sent to your email!") }
                 }
-                is Resource.Error -> updateState { it.copy(isLoading = false, error = result.message) }
+                is Resource.Error -> {
+                    val cleanError = formatAuthError(result.message, "Failed to send reset link.")
+                    updateState { it.copy(isLoading = false, error = cleanError) }
+                }
                 else -> Unit
             }
         }
