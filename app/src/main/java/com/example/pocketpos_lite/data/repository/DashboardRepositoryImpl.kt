@@ -61,13 +61,22 @@ class DashboardRepositoryImpl @Inject constructor(
             val todaySales = sales.sumOf { it["net_amount"] ?: 0.0 }
             val todayTransactions = sales.size
 
+            // Today's Expenses
+            val expenses = postgrest.from("expenses").select {
+                filter {
+                    eq("business_id", businessId)
+                    eq("expense_date", today)
+                }
+            }.decodeList<Map<String, Double>>()
+            val todayExpenses = expenses.sumOf { it["amount"] ?: 0.0 }
+
             Resource.Success(DashboardStats(
                 todaySales = todaySales,
                 todayTransactions = todayTransactions,
                 totalProducts = totalProducts,
                 lowStockProducts = lowStockCount,
-                todayExpenses = 0.0, // Placeholder
-                estimatedProfit = todaySales * 0.2 // Placeholder 20% margin
+                todayExpenses = todayExpenses,
+                estimatedProfit = todaySales - todayExpenses // Simplified profit for foundation
             ))
         } catch (e: Exception) {
             Resource.Error(e.message ?: "Failed to load dashboard stats")

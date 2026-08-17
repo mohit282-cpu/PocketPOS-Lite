@@ -100,6 +100,23 @@ fun DashboardScreen(
                         )
                     }
                 }
+                item {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        StatCard(
+                            title = "Today's Expenses",
+                            value = "$${uiState.stats.todayExpenses}",
+                            icon = Icons.Default.MoneyOff,
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            title = "Est. Profit",
+                            value = "$${uiState.stats.estimatedProfit}",
+                            icon = Icons.Default.TrendingUp,
+                            modifier = Modifier.weight(1f),
+                            contentColor = if (uiState.stats.estimatedProfit >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
                 
                 item {
                     Text("Recent Sales", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

@@ -21,8 +21,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Supabase configuration
-        buildConfigField("String", "SUPABASE_URL", "\"${project.findProperty("supabase.url") ?: ""}\"")
-        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${project.findProperty("supabase.anon_key") ?: ""}\"")
+        val url = (project.findProperty("supabase.url") as? String)?.takeIf { it.isNotBlank() } ?: "https://sybtdoceugrriocwwuyv.supabase.co"
+        val key = (project.findProperty("supabase.anon_key") as? String)?.takeIf { it.isNotBlank() } ?: "sb_publishable_K_Dnh7bc06bBzfut7Ox1kQ_XeqdZqeH"
+        buildConfigField("String", "SUPABASE_URL", "\"$url\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"$key\"")
     }
 
     buildTypes {

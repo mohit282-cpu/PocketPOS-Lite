@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
@@ -18,12 +19,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.example.pocketpos_lite.domain.model.Business
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusinessProfileScreen(
     modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit,
     viewModel: BusinessViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -65,6 +66,11 @@ fun BusinessProfileScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Business Profile") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
                 actions = {
                     if (uiState.isUpdating) {
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))

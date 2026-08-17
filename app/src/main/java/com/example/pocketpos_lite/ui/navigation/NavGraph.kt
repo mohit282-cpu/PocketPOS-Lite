@@ -15,6 +15,7 @@ import com.example.pocketpos_lite.feature.dashboard.DashboardScreen
 import com.example.pocketpos_lite.feature.startup.SplashScreen
 import com.example.pocketpos_lite.ui.components.MainScaffold
 import com.example.pocketpos_lite.feature.business.BusinessProfileScreen
+import com.example.pocketpos_lite.feature.business.SettingsScreen
 
 @Composable
 fun NavGraph(navController: NavHostController) {
@@ -76,10 +77,24 @@ fun NavGraph(navController: NavHostController) {
         
         composable(Screen.Settings.route) {
             MainScaffold(navController) { modifier ->
-                BusinessProfileScreen(
-                    modifier = modifier
+                SettingsScreen(
+                    modifier = modifier,
+                    onNavigateToProfile = {
+                        navController.navigate(Screen.BusinessProfile.route)
+                    },
+                    onLogout = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
+        }
+
+        composable(Screen.BusinessProfile.route) {
+            BusinessProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(Screen.Products.route) { MainScaffold(navController) { PlaceholderScreen("Products", it) } }

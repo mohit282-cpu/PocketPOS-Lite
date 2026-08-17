@@ -1,5 +1,6 @@
 package com.example.pocketpos_lite.feature.business
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -7,9 +8,7 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.pocketpos_lite.feature.auth.AuthViewModel
 
@@ -45,7 +44,7 @@ fun SettingsScreen(
                 supportingContent = { Text("Manage shop details and logo") },
                 leadingContent = { Icon(Icons.Default.Business, contentDescription = null) },
                 trailingContent = { Icon(Icons.Default.ChevronRight, contentDescription = null) },
-                modifier = androidx.compose.foundation.clickable { onNavigateToProfile() }
+                modifier = Modifier.clickable { onNavigateToProfile() }
             )
             
             HorizontalDivider()
@@ -53,7 +52,7 @@ fun SettingsScreen(
             ListItem(
                 headlineContent = { Text("Logout", color = MaterialTheme.colorScheme.error) },
                 leadingContent = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                modifier = androidx.compose.foundation.clickable { authViewModel.logout() }
+                modifier = Modifier.clickable { authViewModel.logout() }
             )
         }
     }
