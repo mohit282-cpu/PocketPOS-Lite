@@ -1,0 +1,11 @@
+package com.example.pocketpos_lite.domain.model
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class Profile(
+    val id: String,
+    val full_name: String? = null,
+    val avatar_url: String? = null,
+    val updated_at: String? = null
+)
