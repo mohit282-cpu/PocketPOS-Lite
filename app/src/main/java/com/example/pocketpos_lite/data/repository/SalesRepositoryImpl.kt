@@ -1,6 +1,7 @@
 package com.example.pocketpos_lite.data.repository
 
 import com.example.pocketpos_lite.core.common.Resource
+import com.example.pocketpos_lite.core.util.ErrorUtils
 import com.example.pocketpos_lite.domain.model.Customer
 import com.example.pocketpos_lite.domain.model.Product
 import com.example.pocketpos_lite.domain.model.SaleItem
@@ -20,12 +21,16 @@ class SalesRepositoryImpl @Inject constructor(
 ) : SalesRepository {
 
     private suspend fun getMyBusinessId(): String? {
-        val userId = auth.currentUserOrNull()?.id ?: return null
-        val membership = postgrest.from("business_users")
-            .select {
-                filter { eq("user_id", userId) }
-            }.decodeList<Map<String, String>>().firstOrNull()
-        return membership?.get("business_id")
+        return try {
+            val userId = auth.currentUserOrNull()?.id ?: return null
+            val membership = postgrest.from("business_users")
+                .select {
+                    filter { eq("user_id", userId) }
+                }.decodeList<Map<String, String>>().firstOrNull()
+            membership?.get("business_id")
+        } catch (e: Exception) {
+            null
+        }
     }
 
     override suspend fun getProducts(): Resource<List<Product>> {
@@ -40,7 +45,7 @@ class SalesRepositoryImpl @Inject constructor(
             }.decodeList<Product>()
             Resource.Success(products)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to load products")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -65,7 +70,7 @@ class SalesRepositoryImpl @Inject constructor(
             }.decodeList<Product>()
             Resource.Success(products)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Search failed")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -78,7 +83,7 @@ class SalesRepositoryImpl @Inject constructor(
             }.decodeList<Customer>()
             Resource.Success(customers)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to load customers")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -123,7 +128,7 @@ class SalesRepositoryImpl @Inject constructor(
 
             Resource.Success(result)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Sale creation failed")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 }

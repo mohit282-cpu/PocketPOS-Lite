@@ -25,6 +25,7 @@ import com.example.pocketpos_lite.domain.model.Sale
 fun DashboardScreen(
     modifier: Modifier = Modifier,
     onLogout: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -57,7 +58,23 @@ fun DashboardScreen(
             }
         } else if (uiState.error != null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = uiState.error!!,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    if (uiState.error!!.contains("complete your business profile", ignoreCase = true)) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onNavigateToSettings) {
+                            Text("Setup Business Now")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(onClick = { viewModel.loadDashboardData() }) {
+                        Text("Retry")
+                    }
+                }
             }
         } else {
             LazyColumn(

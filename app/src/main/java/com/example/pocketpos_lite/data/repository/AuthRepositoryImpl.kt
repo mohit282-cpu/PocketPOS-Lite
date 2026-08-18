@@ -1,6 +1,7 @@
 package com.example.pocketpos_lite.data.repository
 
 import com.example.pocketpos_lite.core.common.Resource
+import com.example.pocketpos_lite.core.util.ErrorUtils
 import com.example.pocketpos_lite.domain.model.Profile
 import com.example.pocketpos_lite.domain.repository.AuthRepository
 import io.github.jan.supabase.auth.Auth
@@ -47,17 +48,12 @@ class AuthRepositoryImpl @Inject constructor(
             }
             
             if (signUpResult == null && auth.currentUserOrNull() == null) {
-                return Resource.Error("User creation failed")
+                return Resource.Error("Account creation initiated. Please verify your email if required.")
             }
-
-            // The profile, business, and business_users records are now handled 
-            // automatically by the database trigger 'on_auth_user_created'.
-            // This is more secure and works even if email confirmation is required.
 
             Resource.Success(Unit)
         } catch (e: Exception) {
-            val cleanError = e.message?.substringBefore("\n") ?: "Unknown error occurred"
-            Resource.Error(cleanError)
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -69,8 +65,7 @@ class AuthRepositoryImpl @Inject constructor(
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
-            val cleanError = e.message?.substringBefore("\n") ?: "Login failed"
-            Resource.Error(cleanError)
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -79,7 +74,7 @@ class AuthRepositoryImpl @Inject constructor(
             auth.signOut()
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Logout failed")
+            Resource.Error("Logout failed")
         }
     }
 
@@ -94,7 +89,7 @@ class AuthRepositoryImpl @Inject constructor(
             auth.resetPasswordForEmail(email)
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Password reset failed")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 }

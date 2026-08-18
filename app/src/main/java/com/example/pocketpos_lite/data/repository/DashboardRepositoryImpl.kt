@@ -4,6 +4,7 @@ import com.example.pocketpos_lite.core.common.Resource
 import com.example.pocketpos_lite.domain.model.DashboardStats
 import com.example.pocketpos_lite.domain.model.Sale
 import com.example.pocketpos_lite.domain.repository.DashboardRepository
+import com.example.pocketpos_lite.core.util.ErrorUtils
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.query.Count
@@ -19,19 +20,23 @@ class DashboardRepositoryImpl @Inject constructor(
 ) : DashboardRepository {
 
     private suspend fun getMyBusinessId(): String? {
-        val userId = auth.currentUserOrNull()?.id ?: return null
-        val membership = postgrest.from("business_users")
-            .select {
-                filter {
-                    eq("user_id", userId)
-                }
-            }.decodeList<Map<String, String>>().firstOrNull()
-        return membership?.get("business_id")
+        return try {
+            val userId = auth.currentUserOrNull()?.id ?: return null
+            val membership = postgrest.from("business_users")
+                .select {
+                    filter {
+                        eq("user_id", userId)
+                    }
+                }.decodeList<Map<String, String>>().firstOrNull()
+            membership?.get("business_id")
+        } catch (e: Exception) {
+            null
+        }
     }
 
     override suspend fun getDashboardStats(): Resource<DashboardStats> {
         return try {
-            val businessId = getMyBusinessId() ?: return Resource.Error("Business not found")
+            val businessId = getMyBusinessId() ?: return Resource.Error("Shop not found. Please complete your business profile.")
             
             // In a real app, I'd use an RPC or multiple async calls. 
             // For foundation, let's just do sequential or return defaults if tables are empty.
@@ -79,13 +84,13 @@ class DashboardRepositoryImpl @Inject constructor(
                 estimatedProfit = todaySales - todayExpenses // Simplified profit for foundation
             ))
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to load dashboard stats")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
     override suspend fun getRecentSales(limit: Int): Resource<List<Sale>> {
         return try {
-            val businessId = getMyBusinessId() ?: return Resource.Error("Business not found")
+            val businessId = getMyBusinessId() ?: return Resource.Error("Shop not found")
             val sales = postgrest.from("sales").select {
                 filter { eq("business_id", businessId) }
                 order("created_at", Order.DESCENDING)
@@ -93,7 +98,7 @@ class DashboardRepositoryImpl @Inject constructor(
             }.decodeList<Sale>()
             Resource.Success(sales)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to load recent sales")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 }

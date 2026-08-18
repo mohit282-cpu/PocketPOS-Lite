@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -19,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.example.pocketpos_lite.domain.model.Business as BusinessModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +67,7 @@ fun BusinessProfileScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Business Profile") },
+                title = { Text(if (uiState.business == null) "Setup Business" else "Business Profile") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -76,17 +78,26 @@ fun BusinessProfileScreen(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     } else {
                         IconButton(onClick = {
+                            if (name.isBlank()) return@IconButton
                             val updated = uiState.business?.copy(
                                 name = name,
                                 phone = phone,
                                 address = address,
                                 email = email,
-                                currency = currency,
-                                invoice_prefix = invoicePrefix
+                                currency = currency.takeIf { it.isNotBlank() } ?: "USD",
+                                invoice_prefix = invoicePrefix.takeIf { it.isNotBlank() } ?: "INV"
+                            ) ?: BusinessModel(
+                                name = name,
+                                owner_id = "", // Set in repo
+                                phone = phone,
+                                address = address,
+                                email = email,
+                                currency = currency.takeIf { it.isNotBlank() } ?: "USD",
+                                invoice_prefix = invoicePrefix.takeIf { it.isNotBlank() } ?: "INV"
                             )
-                            if (updated != null) viewModel.updateBusinessProfile(updated)
+                            viewModel.updateBusinessProfile(updated)
                         }) {
-                            Icon(Icons.Default.Save, contentDescription = "Save")
+                            Icon(if (uiState.business == null) Icons.Default.Check else Icons.Default.Save, contentDescription = "Save")
                         }
                     }
                 }

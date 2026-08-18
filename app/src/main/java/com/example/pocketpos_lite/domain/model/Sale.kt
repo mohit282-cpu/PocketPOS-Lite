@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class Sale(
     val id: String? = null,
     val business_id: String,
+    val cashier_id: String,
     val customer_id: String? = null,
     val total_amount: Double,
     val discount_amount: Double = 0.0,

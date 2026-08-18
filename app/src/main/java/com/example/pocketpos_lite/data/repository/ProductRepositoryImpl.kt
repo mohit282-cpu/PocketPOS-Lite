@@ -1,6 +1,7 @@
 package com.example.pocketpos_lite.data.repository
 
 import com.example.pocketpos_lite.core.common.Resource
+import com.example.pocketpos_lite.core.util.ErrorUtils
 import com.example.pocketpos_lite.domain.model.Category
 import com.example.pocketpos_lite.domain.model.Product
 import com.example.pocketpos_lite.domain.repository.ProductRepository
@@ -20,12 +21,16 @@ class ProductRepositoryImpl @Inject constructor(
     private val bucketName = "product-images"
 
     private suspend fun getMyBusinessId(): String? {
-        val userId = auth.currentUserOrNull()?.id ?: return null
-        val membership = postgrest.from("business_users")
-            .select {
-                filter { eq("user_id", userId) }
-            }.decodeList<Map<String, String>>().firstOrNull()
-        return membership?.get("business_id")
+        return try {
+            val userId = auth.currentUserOrNull()?.id ?: return null
+            val membership = postgrest.from("business_users")
+                .select {
+                    filter { eq("user_id", userId) }
+                }.decodeList<Map<String, String>>().firstOrNull()
+            membership?.get("business_id")
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private suspend fun uploadImage(bytes: ByteArray, fileName: String): String {
@@ -70,7 +75,7 @@ class ProductRepositoryImpl @Inject constructor(
 
             Resource.Success(products)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to load products")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -95,7 +100,7 @@ class ProductRepositoryImpl @Inject constructor(
             val userMsg = when {
                 msg.contains("unique", ignoreCase = true) || msg.contains("sku", ignoreCase = true) ->
                     "Product with this SKU already exists!"
-                else -> msg
+                else -> ErrorUtils.cleanSupabaseError(msg)
             }
             Resource.Error(userMsg)
         }
@@ -134,7 +139,7 @@ class ProductRepositoryImpl @Inject constructor(
             val userMsg = when {
                 msg.contains("unique", ignoreCase = true) || msg.contains("sku", ignoreCase = true) ->
                     "Product with this SKU already exists!"
-                else -> msg
+                else -> ErrorUtils.cleanSupabaseError(msg)
             }
             Resource.Error(userMsg)
         }
@@ -157,7 +162,7 @@ class ProductRepositoryImpl @Inject constructor(
 
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to delete product")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -170,7 +175,7 @@ class ProductRepositoryImpl @Inject constructor(
             }.decodeList<Category>()
             Resource.Success(categories)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to load categories")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -184,7 +189,7 @@ class ProductRepositoryImpl @Inject constructor(
             Resource.Success(inserted)
         } catch (e: Exception) {
             val msg = e.message ?: "Failed to create category"
-            val userMsg = if (msg.contains("unique", ignoreCase = true)) "Category already exists!" else msg
+            val userMsg = if (msg.contains("unique", ignoreCase = true)) "Category already exists!" else ErrorUtils.cleanSupabaseError(msg)
             Resource.Error(userMsg)
         }
     }
@@ -201,7 +206,7 @@ class ProductRepositoryImpl @Inject constructor(
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to update category")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 
@@ -216,7 +221,7 @@ class ProductRepositoryImpl @Inject constructor(
             }
             Resource.Success(Unit)
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to delete category")
+            Resource.Error(ErrorUtils.cleanSupabaseError(e.message))
         }
     }
 }

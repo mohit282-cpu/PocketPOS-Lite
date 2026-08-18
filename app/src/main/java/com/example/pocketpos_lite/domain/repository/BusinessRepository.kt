@@ -6,5 +6,6 @@ import com.example.pocketpos_lite.domain.model.Business
 interface BusinessRepository {
     suspend fun getBusinessProfile(): Resource<Business>
     suspend fun updateBusinessProfile(business: Business): Resource<Unit>
+    suspend fun createBusiness(business: Business): Resource<Unit>
     suspend fun uploadLogo(fileName: String, byteArray: ByteArray): Resource<String>
 }

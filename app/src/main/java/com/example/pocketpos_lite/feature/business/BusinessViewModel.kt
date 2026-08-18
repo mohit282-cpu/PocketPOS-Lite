@@ -40,9 +40,16 @@ class BusinessViewModel @Inject constructor(
     fun updateBusinessProfile(business: Business) {
         viewModelScope.launch {
             updateState { it.copy(isUpdating = true, error = null, successMessage = null) }
-            when (val result = repository.updateBusinessProfile(business)) {
+            val result = if (business.id == null) {
+                repository.createBusiness(business)
+            } else {
+                repository.updateBusinessProfile(business)
+            }
+            
+            when (result) {
                 is Resource.Success -> {
-                    updateState { it.copy(isUpdating = false, business = business, successMessage = "Profile updated successfully") }
+                    loadBusinessProfile()
+                    updateState { it.copy(isUpdating = false, successMessage = if (business.id == null) "Business created successfully" else "Profile updated successfully") }
                 }
                 is Resource.Error -> updateState { it.copy(isUpdating = false, error = result.message) }
                 else -> Unit

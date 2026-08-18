@@ -6,6 +6,7 @@ import com.example.pocketpos_lite.core.common.Resource
 import com.example.pocketpos_lite.domain.model.DashboardStats
 import com.example.pocketpos_lite.domain.model.Sale
 import com.example.pocketpos_lite.domain.repository.DashboardRepository
+import com.example.pocketpos_lite.core.util.ErrorUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -40,8 +41,8 @@ class DashboardViewModel @Inject constructor(
                     recentSales = salesResult.data!!
                 ) }
             } else {
-                val error = statsResult.message ?: salesResult.message ?: "An error occurred"
-                updateState { it.copy(isLoading = false, error = error) }
+                val rawError = statsResult.message ?: salesResult.message ?: "An error occurred"
+                updateState { it.copy(isLoading = false, error = ErrorUtils.cleanSupabaseError(rawError)) }
             }
         }
     }
